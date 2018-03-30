@@ -1,6 +1,5 @@
 const Discord = require("discord.js");
-const Commando = require("discord.js-commando");
-const Bot = new Commando.Client();
+const Bot = new Discord.Client();
 
 const prefix = "$";
 
