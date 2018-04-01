@@ -1,5 +1,6 @@
 const Discord = require("discord.js");
-const Bot = new Discord.Client();
+const Commando = require("discord.js-commando");
+const Bot = new Commando.Client();
 
 const prefix = "$";
 
@@ -17,9 +18,21 @@ Bot.on("ready", async () => {
 
 //Befehle
 Bot.on("message", async (message) => {
-  var content = message.content;
-  var author = message.member;
-  if(author.id != Bot.user.id){
+  try{
+    var content = message.content;
+    var author = message.member;
+  }catch(e){
+    console.log(`[error] Der Inhalt und/oder der Autor der gesendeten Nachricht konnten nicht bestimmt werden.`);
+    return;
+  }
+
+  //Alle Rollen des Member in Array
+  var roles = [];
+  for(i=0; i<message.member.roles.array().length; i++){
+    roles[i] = message.member.roles.array()[i].name;
+  }
+
+  if(author.id != Bot.user.id  && ArrayContains(roles, "Member")){
     if(content.toUpperCase() == `${prefix}BOT`){
       message.channel.sendMessage(`Hallo ${author}, ich bin der Bot dieses Servers.`);
     }else if(content.toUpperCase() == `${prefix}MÜNZWURF`){
@@ -76,7 +89,7 @@ Bot.on("message", async (message) => {
     }else if(content.toUpperCase() == `${prefix}HELP`){
       var embed = new Discord.RichEmbed()
         .setAuthor("Übersicht Befehle")
-        .setDescription("Hier sind alle Befehle aufgelistet. Groß- und Kleinschreibung ist egal, hauptsache du startest mit dem Prefix $.")
+        .setDescription("Hier sind alle Befehle aufgelistet. Um dem Main Bot einen Befehl zu schreiben musst du mindestens die Rolle Member besitzen. Groß- und Kleinschreibung ist egal, hauptsache du startest mit dem Prefix $.")
         .addField("Info zum Main Bot:", "$bot")
         .addField("Münzwurf (Kopf oder Zahl):", "$münzwurf")
         .addField("Befehle des Dyno Musikbots:", "$musik")
@@ -90,19 +103,34 @@ Bot.on("message", async (message) => {
 
 Bot.on("voiceStateUpdate", (oldMember, newMember) => {
   var username = newMember.user.username;
-  if(username != "MusikBot"){
+  if(username != "Musik"){
     try{
       var oldMemberChannel = oldMember.voiceChannel.name;
       var newMemberChannel = newMember.voiceChannel.name;
     }catch(e){
-      console.log("[error] oldMemberChannel und/oder newMemberChannel konnten nicht bestimmt werden.");
+      console.log(`[error] oldMemberChannel und/oder newMemberChannel von ${username} konnten nicht bestimmt werden.`);
     }
     if(newMemberChannel == "AFK Bereich" && newMemberChannel != oldMemberChannel){
       newMember.setMute(true, "");
+      console.log(`[success] Client ${username} wurde im AFK Bereich gemutet.`);
     }else if(newMemberChannel != "AFK Bereich" && newMemberChannel != oldMemberChannel){
-      newMember.setMute(false, "");
+      if(newMember.mute){
+        newMember.setMute(false, "");
+        console.log(`[success] Client ${username} wurde außerhalb des AFK Berichs geunmuted.`);
+      }
     }
   }
 });
+
+function ArrayContains(array, contains){
+  for(i=0; i<array.length; i++){
+    if(array[i] == contains){
+      return true;
+    }else{
+      res = false;
+    }
+  }
+  return res;
+}
 
 Bot.login("process.env.BOT_TOKEN");
